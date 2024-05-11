@@ -4,18 +4,28 @@ import ReactDOM from "react-dom";
 
 /** Internal */
 import "./popup.css";
-import { BORDER_COLOR_UPDATE, DEFAULT_BORDER_COLOR } from "../lib/constants";
+import {
+  BORDER_COLOR_UPDATE,
+  DEFAULT_BORDER_COLOR,
+  TOGGLE_INSPECT,
+} from "../lib/constants";
 import {
   sendMessageToContentScript,
   getBorderColorFromChromeStorage,
+  getInspectStatusFromContentScript,
 } from "../lib/utils";
 
 const App: React.FC<{}> = () => {
   const [borderColor, setBorderColor] = useState<string>(DEFAULT_BORDER_COLOR);
+  const [isInspecting, setIsInspecting] = useState<boolean>(false);
 
   useEffect(() => {
     getBorderColorFromChromeStorage().then((color: string) => {
       setBorderColor(color);
+    });
+
+    getInspectStatusFromContentScript().then((inspectStatus: boolean) => {
+      setIsInspecting(inspectStatus);
     });
   }, []);
 
@@ -42,6 +52,11 @@ const App: React.FC<{}> = () => {
     chrome.storage.sync.set({ borderColor: color });
   };
 
+  const handleStartStopClick = () => {
+    setIsInspecting((prev) => !prev);
+    sendMessageToContentScript({ action: TOGGLE_INSPECT });
+  };
+
   return (
     <div>
       <h1 className="popupHeader">Data Test Id - Inspector</h1>
@@ -63,7 +78,9 @@ const App: React.FC<{}> = () => {
       </div>
 
       <div className="buttonsContainer">
-        <button id="inspectButton">Start</button>
+        <button id="inspectButton" onClick={handleStartStopClick}>
+          {isInspecting ? "Stop" : "Start"}
+        </button>
         <button id="findDuplicates">Find duplicates</button>
         <button id="findMissing">Find missing</button>
       </div>
