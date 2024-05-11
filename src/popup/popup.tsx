@@ -40,7 +40,6 @@ const App: React.FC<{}> = () => {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const color = event.target.value;
-    console.log("handleColorInputChange");
     setBorderColor(color);
   };
 
@@ -48,7 +47,6 @@ const App: React.FC<{}> = () => {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const color = event.target.value;
-    console.log("saveBorderColorToChromeStorage");
     chrome.storage.sync.set({ borderColor: color });
   };
 

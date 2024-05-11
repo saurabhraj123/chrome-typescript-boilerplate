@@ -14,12 +14,21 @@ getBorderColorFromChromeStorage()
   .then((color: string) => (borderColor = color))
   .catch(() => (borderColor = DEFAULT_BORDER_COLOR));
 
+// Create a MutationObserver to listen for changes to the DOM
+const observer = new MutationObserver(function (mutationsList, observer) {
+  for (let mutation of mutationsList) {
+    if (mutation.type === "childList") {
+      // If nodes are added or removed, apply border to elements with test IDs
+      applyBorderToElementsWithTestId(borderColor);
+    }
+  }
+});
+
 /** Message listener(s) */
 chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
   switch (message.action) {
     case TOGGLE_INSPECT:
       isInspecting = !isInspecting;
-      console.log({ isInspecting });
 
       // add or remove border color
       isInspecting
@@ -46,9 +55,11 @@ const applyBorderToElementsWithTestId = (color: string) => {
   elements.forEach((element) => {
     element.style.border = `2px solid ${color}`;
   });
+
+  observer.observe(document.body, { subtree: true, childList: true });
 };
 
-function removeBorderFromElementsWithTestId() {
+const removeBorderFromElementsWithTestId = () => {
   const elementsWithTestId = document.querySelectorAll(
     "[data-test-id]"
   ) as NodeListOf<HTMLElement>;
@@ -56,4 +67,6 @@ function removeBorderFromElementsWithTestId() {
   elementsWithTestId.forEach((element) => {
     element.style.border = null;
   });
-}
+
+  observer.disconnect();
+};
