@@ -1,14 +1,60 @@
-import React from "react";
+/** External */
+import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
+
+/** Internal */
 import "./popup.css";
+import { BORDER_COLOR_UPDATE, DEFAULT_BORDER_COLOR } from "../lib/constants";
+import {
+  sendMessageToContentScript,
+  getBorderColorFromChromeStorage,
+} from "../lib/utils";
 
 const App: React.FC<{}> = () => {
+  const [borderColor, setBorderColor] = useState<string>(DEFAULT_BORDER_COLOR);
+
+  useEffect(() => {
+    getBorderColorFromChromeStorage().then((color: string) => {
+      setBorderColor(color);
+    });
+  }, []);
+
+  useEffect(() => {
+    sendMessageToContentScript({
+      action: BORDER_COLOR_UPDATE,
+      payload: { borderColor },
+    });
+  }, [borderColor]);
+
+  const handleColorInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const color = event.target.value;
+    console.log("handleColorInputChange");
+    setBorderColor(color);
+  };
+
+  const saveBorderColorToChromeStorage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const color = event.target.value;
+    console.log("saveBorderColorToChromeStorage");
+    chrome.storage.sync.set({ borderColor: color });
+  };
+
   return (
     <div>
       <h1 className="popupHeader">Data Test Id - Inspector</h1>
       <div className="borderColorPickerContainer">
         <label htmlFor="borderColorPicker">Border color:</label>
-        <input type="color" id="borderColorPicker" name="borderColorPicker" />
+        <input
+          type="color"
+          id="borderColorPicker"
+          name="borderColorPicker"
+          value={borderColor}
+          onBlur={saveBorderColorToChromeStorage}
+          onChange={handleColorInputChange}
+        />
       </div>
 
       <div className="copyIconCheckboxContainer">
