@@ -1,5 +1,5 @@
 {
-  "name": "React Extension",
+  "name": "Data Test Id - Inspector",
   "description": "Chrome Extension in React!",
   "version": "1.0.0",
   "manifest_version": 3,
@@ -10,7 +10,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "React Extension",
+    "default_title": "Data Test Id - Inspector",
     "default_icon": "icon.png"
   },
   "permissions": ["storage"],

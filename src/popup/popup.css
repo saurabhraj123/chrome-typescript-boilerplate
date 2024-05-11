@@ -1,3 +1,30 @@
 body {
-  background-color: #1c1c1c;
+  width: 260px;
+  height: 140px;
+}
+
+.popupHeader {
+  text-decoration: underline;
+}
+
+label {
+  font-size: 16px;
+}
+
+.borderColorPickerContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.copyIconCheckboxContainer {
+  display: flex;
+  align-items: center;
+}
+
+.buttonsContainer {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
 }
