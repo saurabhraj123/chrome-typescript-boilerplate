@@ -1,4 +1,4 @@
-import { GET_INSPECT_STATUS } from "./constants";
+import { GET_INSPECT_STATUS, SHOW_COPY_ICON } from "./constants";
 
 export const getBorderColorFromChromeStorage = () => {
   return new Promise((resolve, reject) => {
@@ -20,6 +20,26 @@ export const getInspectStatusFromContentScript = () => {
           else resolve(response);
         }
       );
+    });
+  });
+};
+
+export const sendShowCopyIconToContentScript = (showCopyIcon: boolean) => {
+  return new Promise((resolve, reject) => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        action: SHOW_COPY_ICON,
+        payload: { showCopyIcon },
+      });
+    });
+  });
+};
+
+export const getShowCopyIconFromChromeStorage = () => {
+  return new Promise((resolve, reject) => {
+    chrome.storage.sync.get("showCopyIcon", (result) => {
+      if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
+      else resolve(result.showCopyIcon);
     });
   });
 };

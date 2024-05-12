@@ -13,11 +13,14 @@ import {
   sendMessageToContentScript,
   getBorderColorFromChromeStorage,
   getInspectStatusFromContentScript,
+  getShowCopyIconFromChromeStorage,
+  sendShowCopyIconToContentScript,
 } from "../lib/utils";
 
 const App: React.FC<{}> = () => {
   const [borderColor, setBorderColor] = useState<string>(DEFAULT_BORDER_COLOR);
   const [isInspecting, setIsInspecting] = useState<boolean>(false);
+  const [showCopyIcon, setShowCopyIcon] = useState<boolean>(false);
 
   useEffect(() => {
     getBorderColorFromChromeStorage().then((color: string) => {
@@ -26,6 +29,10 @@ const App: React.FC<{}> = () => {
 
     getInspectStatusFromContentScript().then((inspectStatus: boolean) => {
       setIsInspecting(inspectStatus);
+    });
+
+    getShowCopyIconFromChromeStorage().then((showCopyIcon: boolean) => {
+      setShowCopyIcon(showCopyIcon);
     });
   }, []);
 
@@ -72,7 +79,17 @@ const App: React.FC<{}> = () => {
 
       <div className="copyIconCheckboxContainer">
         <label htmlFor="copyIconCheckbox">Show copy icon on hover:</label>
-        <input type="checkbox" id="copyIconCheckbox" name="copyIconCheckbox" />
+        <input
+          type="checkbox"
+          id="copyIconCheckbox"
+          name="copyIconCheckbox"
+          checked={showCopyIcon}
+          onChange={() => {
+            chrome.storage.sync.set({ showCopyIcon: !showCopyIcon });
+            sendShowCopyIconToContentScript(!showCopyIcon);
+            setShowCopyIcon((prev) => !prev);
+          }}
+        />
       </div>
 
       <div className="buttonsContainer">

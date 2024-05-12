@@ -1,18 +1,28 @@
 /** Internal */
-import { getBorderColorFromChromeStorage } from "../lib/utils";
+import {
+  getBorderColorFromChromeStorage,
+  getShowCopyIconFromChromeStorage,
+} from "../lib/utils";
 import {
   BORDER_COLOR_UPDATE,
   DEFAULT_BORDER_COLOR,
   GET_INSPECT_STATUS,
+  SHOW_COPY_ICON,
   TOGGLE_INSPECT,
 } from "../lib/constants";
 
 /** Global variables */
 let isInspecting = false;
 let borderColor: string;
+let showCopyIcon: boolean;
+
 getBorderColorFromChromeStorage()
   .then((color: string) => (borderColor = color))
   .catch(() => (borderColor = DEFAULT_BORDER_COLOR));
+
+getShowCopyIconFromChromeStorage()
+  .then((showIcon: boolean) => (showCopyIcon = showIcon))
+  .catch(() => (showCopyIcon = true));
 
 // Create a MutationObserver to listen for changes to the DOM
 const observer = new MutationObserver(function (mutationsList, observer) {
@@ -52,6 +62,10 @@ chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
     case GET_INSPECT_STATUS:
       sendResponse(isInspecting);
       break;
+    case SHOW_COPY_ICON:
+      const { showCopyIcon: showIcon } = message.payload || {};
+      showCopyIcon = showIcon;
+      break;
   }
 });
 
@@ -85,6 +99,8 @@ const offsetParentHasTransformProperty = (element: HTMLElement) => {
 
 const addCopyButton = (e: MouseEvent) => {
   removeCopyButton();
+  if (!showCopyIcon) return;
+
   const element = e.target as HTMLElement;
   const elementRect = element.getBoundingClientRect();
 
