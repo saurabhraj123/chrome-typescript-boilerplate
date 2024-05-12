@@ -17,9 +17,17 @@ getBorderColorFromChromeStorage()
 // Create a MutationObserver to listen for changes to the DOM
 const observer = new MutationObserver(function (mutationsList, observer) {
   for (let mutation of mutationsList) {
-    if (mutation.type === "childList") {
-      // If nodes are added or removed, apply border to elements with test IDs
+    if (
+      mutation.type === "childList" &&
+      isInspecting &&
+      mutation.addedNodes.length > 0 &&
+      mutation.target instanceof HTMLElement &&
+      !(mutation.target.className === "copyButton") &&
+      !mutation.target.contains(document.querySelector(".copyButton"))
+    ) {
+      observer.disconnect();
       applyBorderToElementsWithTestId(borderColor);
+      break;
     }
   }
 });
@@ -53,10 +61,70 @@ const applyBorderToElementsWithTestId = (color: string) => {
   ) as NodeListOf<HTMLElement>;
 
   elements.forEach((element) => {
+    const testId = element.getAttribute("data-test-id");
     element.style.border = `2px solid ${color}`;
+    element.title = testId;
+
+    const copyButton = createCopyButton(testId);
+    copyButton.style.zIndex = "999999999999";
+    copyButton.classList.add("copyButton");
+
+    const removeCopyButtons = () => {
+      const copyButtons = document.querySelectorAll(".copyButton");
+      copyButtons.forEach((button) => button.remove());
+    };
+
+    const offsetParentHasTransformProperty = () => {
+      const parent = element.offsetParent;
+      const parentStyles = getComputedStyle(parent);
+      return parentStyles.transform !== "none";
+    };
+
+    const updateWrapperPosition = (e: MouseEvent) => {
+      removeCopyButtons();
+      const elementRect = element.getBoundingClientRect();
+
+      if (offsetParentHasTransformProperty()) {
+        copyButton.style.position = "absolute";
+        copyButton.style.top = `${element.offsetTop}px`;
+        copyButton.style.left = `${element.offsetLeft}px`;
+      } else {
+        copyButton.style.position = "fixed";
+        copyButton.style.top = `${elementRect.top}px`;
+        copyButton.style.left = `${elementRect.left}px`;
+        copyButton.style.width = "fit-content";
+      }
+      element.appendChild(copyButton);
+    };
+
+    element.addEventListener("mouseenter", updateWrapperPosition);
+    element.addEventListener("mouseleave", () => removeCopyButtons());
   });
 
   observer.observe(document.body, { subtree: true, childList: true });
+};
+
+const createCopyButton = (testId: string) => {
+  const button = document.createElement("button");
+  button.textContent = "Copy";
+  button.style.background = "red";
+  button.style.color = "white";
+
+  button.addEventListener("click", (e) => {
+    e.stopPropagation();
+    copyTestId(testId);
+    button.textContent = "Copied!";
+    setTimeout(() => (button.textContent = "Copy"), 1000);
+  });
+
+  return button;
+};
+
+const copyTestId = (testId: string) => {
+  navigator.clipboard
+    .writeText(testId)
+    .then(() => console.log("Test ID copied to clipboard"))
+    .catch((err) => console.error("Failed to copy test ID:", err));
 };
 
 const removeBorderFromElementsWithTestId = () => {
