@@ -65,43 +65,45 @@ const applyBorderToElementsWithTestId = (color: string) => {
     element.style.border = `2px solid ${color}`;
     element.title = testId;
 
-    const copyButton = createCopyButton(testId);
-    copyButton.style.zIndex = "999999999999";
-    copyButton.classList.add("copyButton");
-
-    const removeCopyButtons = () => {
-      const copyButtons = document.querySelectorAll(".copyButton");
-      copyButtons.forEach((button) => button.remove());
-    };
-
-    const offsetParentHasTransformProperty = () => {
-      const parent = element.offsetParent;
-      const parentStyles = getComputedStyle(parent);
-      return parentStyles.transform !== "none";
-    };
-
-    const updateWrapperPosition = (e: MouseEvent) => {
-      removeCopyButtons();
-      const elementRect = element.getBoundingClientRect();
-
-      if (offsetParentHasTransformProperty()) {
-        copyButton.style.position = "absolute";
-        copyButton.style.top = `${element.offsetTop}px`;
-        copyButton.style.left = `${element.offsetLeft}px`;
-      } else {
-        copyButton.style.position = "fixed";
-        copyButton.style.top = `${elementRect.top}px`;
-        copyButton.style.left = `${elementRect.left}px`;
-        copyButton.style.width = "fit-content";
-      }
-      element.appendChild(copyButton);
-    };
-
-    element.addEventListener("mouseenter", updateWrapperPosition);
-    element.addEventListener("mouseleave", () => removeCopyButtons());
+    element.addEventListener("mouseenter", addCopyButton);
+    element.addEventListener("mouseleave", removeCopyButton);
   });
 
   observer.observe(document.body, { subtree: true, childList: true });
+};
+
+const removeCopyButton = () => {
+  const copyButtons = document.querySelectorAll(".copyButton");
+  copyButtons.forEach((button) => button.remove());
+};
+
+const offsetParentHasTransformProperty = (element: HTMLElement) => {
+  const parent = element.offsetParent;
+  const parentStyles = getComputedStyle(parent);
+  return parentStyles.transform !== "none";
+};
+
+const addCopyButton = (e: MouseEvent) => {
+  removeCopyButton();
+  const element = e.target as HTMLElement;
+  const elementRect = element.getBoundingClientRect();
+
+  const testId = element.getAttribute("data-test-id");
+  const copyButton = createCopyButton(testId);
+  copyButton.style.zIndex = "999999999999";
+  copyButton.classList.add("copyButton");
+
+  if (offsetParentHasTransformProperty(element)) {
+    copyButton.style.position = "absolute";
+    copyButton.style.top = `${element.offsetTop}px`;
+    copyButton.style.left = `${element.offsetLeft}px`;
+  } else {
+    copyButton.style.position = "fixed";
+    copyButton.style.top = `${elementRect.top}px`;
+    copyButton.style.left = `${elementRect.left}px`;
+    copyButton.style.width = "fit-content";
+  }
+  element.appendChild(copyButton);
 };
 
 const createCopyButton = (testId: string) => {
@@ -134,7 +136,12 @@ const removeBorderFromElementsWithTestId = () => {
 
   elementsWithTestId.forEach((element) => {
     element.style.border = null;
+    element.title = "";
+    element.removeEventListener("mouseenter", addCopyButton);
+    element.removeEventListener("mouseleave", removeCopyButton);
   });
+
+  document.querySelector(".copyButton")?.remove();
 
   observer.disconnect();
 };
