@@ -1,6 +1,15 @@
 body {
   width: 260px;
-  height: 140px;
+  height: 134px;
+}
+
+.popupHeader {
+  font-size: 20px;
+}
+
+#borderColorPicker {
+  width: 36px;
+  height: 24px;
 }
 
 label {
@@ -28,6 +37,11 @@ label {
 .keyboardShortcut {
   background-color: gray;
   color: white;
-  padding: 0.4em 0.8em;
+  padding: 2px 3px 4px;
   border-radius: 3px;
+}
+
+.separator {
+  margin: 8px 0;
+  border-top: 1px solid #ccc;
 }

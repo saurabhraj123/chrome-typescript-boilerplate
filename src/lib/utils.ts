@@ -49,3 +49,7 @@ export const sendMessageToContentScript = (message: any) => {
     chrome.tabs.sendMessage(tabs[0].id, message);
   });
 };
+
+export const isCtrlShiftPressed = (event: KeyboardEvent) => {
+  return (event.metaKey || event.ctrlKey) && event.shiftKey;
+};

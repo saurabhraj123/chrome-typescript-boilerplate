@@ -15,6 +15,7 @@ import {
   getInspectStatusFromContentScript,
   getShowCopyIconFromChromeStorage,
   sendShowCopyIconToContentScript,
+  isCtrlShiftPressed,
 } from "../lib/utils";
 
 const App: React.FC<{}> = () => {
@@ -24,7 +25,7 @@ const App: React.FC<{}> = () => {
 
   useEffect(() => {
     getBorderColorFromChromeStorage().then((color: string) => {
-      setBorderColor(color);
+      setBorderColor(color || DEFAULT_BORDER_COLOR);
     });
 
     getInspectStatusFromContentScript().then((inspectStatus: boolean) => {
@@ -32,7 +33,7 @@ const App: React.FC<{}> = () => {
     });
 
     getShowCopyIconFromChromeStorage().then((showCopyIcon: boolean) => {
-      setShowCopyIcon(showCopyIcon);
+      setShowCopyIcon(showCopyIcon || true);
     });
   }, []);
 
@@ -42,6 +43,22 @@ const App: React.FC<{}> = () => {
       payload: { borderColor },
     });
   }, [borderColor]);
+
+  const handleShortcuts = (event: KeyboardEvent) => {
+    if (isCtrlShiftPressed(event) && event.key == "z") {
+      handleStartStopClick();
+    } else if (isCtrlShiftPressed(event) && event.key == "x") {
+      handleShowCopyIconClick();
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleShortcuts);
+
+    return () => {
+      document.removeEventListener("keydown", handleShortcuts);
+    };
+  }, [showCopyIcon]);
 
   const handleColorInputChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -62,10 +79,20 @@ const App: React.FC<{}> = () => {
     sendMessageToContentScript({ action: TOGGLE_INSPECT });
   };
 
+  const handleShowCopyIconClick = () => {
+    chrome.storage.sync.set({ showCopyIcon: !showCopyIcon });
+    sendShowCopyIconToContentScript(!showCopyIcon);
+    setShowCopyIcon((prev) => !prev);
+  };
+
   return (
-    <div>
+    <div className="container">
       <h1 className="popupHeader">Data Test Id - Inspector</h1>
-      <div className="borderColorPickerContainer">
+      <div className="separator"> </div>
+      <div
+        className="borderColorPickerContainer"
+        title="Border color for test-id divs"
+      >
         <label htmlFor="borderColorPicker">Border color:</label>
         <input
           type="color"
@@ -77,27 +104,25 @@ const App: React.FC<{}> = () => {
         />
       </div>
 
-      <div className="copyIconCheckboxContainer">
+      <div className="copyIconCheckboxContainer" title="cmd/ctrl + shift + x">
         <label htmlFor="copyIconCheckbox">Show copy icon on hover:</label>
         <input
           type="checkbox"
           id="copyIconCheckbox"
           name="copyIconCheckbox"
           checked={showCopyIcon}
-          onChange={() => {
-            chrome.storage.sync.set({ showCopyIcon: !showCopyIcon });
-            sendShowCopyIconToContentScript(!showCopyIcon);
-            setShowCopyIcon((prev) => !prev);
-          }}
+          onChange={handleShowCopyIconClick}
         />
       </div>
 
       <div className="buttonsContainer">
-        <button id="inspectButton" onClick={handleStartStopClick}>
+        <button
+          id="inspectButton"
+          onClick={handleStartStopClick}
+          title="cmd/ctrl + shift + z"
+        >
           {isInspecting ? "Stop Inspecting" : "Start Inspecting"}
         </button>
-
-        <span className="keyboardShortcut">Ctrl/Cmd + Shift + Z</span>
       </div>
     </div>
   );

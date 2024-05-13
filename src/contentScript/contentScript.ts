@@ -2,6 +2,7 @@
 import {
   getBorderColorFromChromeStorage,
   getShowCopyIconFromChromeStorage,
+  isCtrlShiftPressed,
 } from "../lib/utils";
 import {
   BORDER_COLOR_UPDATE,
@@ -18,11 +19,15 @@ let showCopyIcon: boolean;
 let elementTestIdCountMap: { [key: string]: number } = {};
 
 getBorderColorFromChromeStorage()
-  .then((color: string) => (borderColor = color))
+  .then((color: string) => {
+    borderColor = color || DEFAULT_BORDER_COLOR;
+  })
   .catch(() => (borderColor = DEFAULT_BORDER_COLOR));
 
 getShowCopyIconFromChromeStorage()
-  .then((showIcon: boolean) => (showCopyIcon = showIcon))
+  .then((showIcon: boolean) => {
+    showCopyIcon = showIcon || true;
+  })
   .catch(() => (showCopyIcon = true));
 
 // event listener
@@ -212,8 +217,4 @@ const removeBorderFromElementsWithTestId = () => {
   document.querySelector(".testIdExtensionButton")?.remove();
 
   observer.disconnect();
-};
-
-const isCtrlShiftPressed = (event: KeyboardEvent) => {
-  return (event.metaKey || event.ctrlKey) && event.shiftKey;
 };
