@@ -94,10 +94,10 @@ const App: React.FC<{}> = () => {
 
       <div className="buttonsContainer">
         <button id="inspectButton" onClick={handleStartStopClick}>
-          {isInspecting ? "Stop" : "Start"}
+          {isInspecting ? "Stop Inspecting" : "Start Inspecting"}
         </button>
-        <button id="findDuplicates">Find duplicates</button>
-        <button id="findMissing">Find missing</button>
+
+        <span className="keyboardShortcut">Ctrl/Cmd + Shift + Z</span>
       </div>
     </div>
   );

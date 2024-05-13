@@ -15,6 +15,7 @@ import {
 let isInspecting = false;
 let borderColor: string;
 let showCopyIcon: boolean;
+let elementTestIdCountMap: { [key: string]: number } = {};
 
 getBorderColorFromChromeStorage()
   .then((color: string) => (borderColor = color))
@@ -24,6 +25,20 @@ getShowCopyIconFromChromeStorage()
   .then((showIcon: boolean) => (showCopyIcon = showIcon))
   .catch(() => (showCopyIcon = true));
 
+// event listener
+document.addEventListener("keydown", (event) => {
+  if (isCtrlShiftPressed(event) && event.key == "z") {
+    isInspecting = !isInspecting;
+    isInspecting
+      ? applyBorderToElementsWithTestId(borderColor)
+      : removeBorderFromElementsWithTestId();
+  } else if (isCtrlShiftPressed(event) && event.key == "x") {
+    showCopyIcon = !showCopyIcon;
+    if (!showCopyIcon) removeCopyButton();
+    chrome.storage.sync.set({ showCopyIcon });
+  }
+});
+
 // Create a MutationObserver to listen for changes to the DOM
 const observer = new MutationObserver(function (mutationsList, observer) {
   for (let mutation of mutationsList) {
@@ -32,10 +47,13 @@ const observer = new MutationObserver(function (mutationsList, observer) {
       isInspecting &&
       mutation.addedNodes.length > 0 &&
       mutation.target instanceof HTMLElement &&
-      !(mutation.target.className === "copyButton") &&
-      !mutation.target.contains(document.querySelector(".copyButton"))
+      !(mutation.target.className === "testIdExtensionButton") &&
+      !mutation.target.contains(
+        document.querySelector(".testIdExtensionButton")
+      )
     ) {
       observer.disconnect();
+      elementTestIdCountMap = {};
       applyBorderToElementsWithTestId(borderColor);
       break;
     }
@@ -74,10 +92,15 @@ const applyBorderToElementsWithTestId = (color: string) => {
     "[data-test-id]"
   ) as NodeListOf<HTMLElement>;
 
+  fillTestIdHashTable(elements);
+
   elements.forEach((element) => {
     const testId = element.getAttribute("data-test-id");
-    element.style.border = `2px solid ${color}`;
+    const testIdCount = elementTestIdCountMap[testId];
+
     element.title = testId;
+    element.style.border =
+      !testId || testIdCount > 1 ? `4px dotted ${color}` : `2px solid ${color}`;
 
     element.addEventListener("mouseenter", addCopyButton);
     element.addEventListener("mouseleave", removeCopyButton);
@@ -86,13 +109,23 @@ const applyBorderToElementsWithTestId = (color: string) => {
   observer.observe(document.body, { subtree: true, childList: true });
 };
 
+const fillTestIdHashTable = (elements: NodeListOf<HTMLElement>) => {
+  elementTestIdCountMap = {};
+  elements.forEach((element) => {
+    const testId = element.getAttribute("data-test-id");
+    if (testId)
+      elementTestIdCountMap[testId] = elementTestIdCountMap[testId] + 1 || 1;
+  });
+};
+
 const removeCopyButton = () => {
-  const copyButtons = document.querySelectorAll(".copyButton");
+  const copyButtons = document.querySelectorAll(".testIdExtensionButton");
   copyButtons.forEach((button) => button.remove());
 };
 
 const offsetParentHasTransformProperty = (element: HTMLElement) => {
   const parent = element.offsetParent;
+  if (!parent) return false;
   const parentStyles = getComputedStyle(parent);
   return parentStyles.transform !== "none";
 };
@@ -102,31 +135,50 @@ const addCopyButton = (e: MouseEvent) => {
   if (!showCopyIcon) return;
 
   const element = e.target as HTMLElement;
-  const elementRect = element.getBoundingClientRect();
+  if (element.classList.contains("testIdExtensionButton")) return;
 
   const testId = element.getAttribute("data-test-id");
   const copyButton = createCopyButton(testId);
-  copyButton.style.zIndex = "999999999999";
-  copyButton.classList.add("copyButton");
+
+  addButtonToCurrentElement(element, copyButton);
+};
+
+const addButtonToCurrentElement = (
+  element: HTMLElement,
+  button: HTMLElement
+) => {
+  const elementRect = element.getBoundingClientRect();
 
   if (offsetParentHasTransformProperty(element)) {
-    copyButton.style.position = "absolute";
-    copyButton.style.top = `${element.offsetTop}px`;
-    copyButton.style.left = `${element.offsetLeft}px`;
+    button.style.position = "absolute";
+    button.style.top = `${element.offsetTop}px`;
+    button.style.left = `${element.offsetLeft}px`;
   } else {
-    copyButton.style.position = "fixed";
-    copyButton.style.top = `${elementRect.top}px`;
-    copyButton.style.left = `${elementRect.left}px`;
-    copyButton.style.width = "fit-content";
+    button.style.position = "fixed";
+    if (elementRect.top < 0 || elementRect.left < 0) {
+      setTimeout(() => addButtonToCurrentElement(element, button), 100);
+      return;
+    }
+    button.style.top = `${elementRect.top}px`;
+    button.style.left = `${elementRect.left}px`;
+    button.style.width = "fit-content";
   }
-  element.appendChild(copyButton);
+  element.appendChild(button);
 };
 
 const createCopyButton = (testId: string) => {
   const button = document.createElement("button");
   button.textContent = "Copy";
-  button.style.background = "red";
-  button.style.color = "white";
+  button.style.background = "#f5f5f5"; /* Light gray background */
+  button.style.color = "#333333"; /* Dark gray text */
+  button.style.border = "1px solid #cccccc"; /* Light gray border */
+  button.style.padding = "5px 10px"; /* Adjust padding as needed */
+  button.style.borderRadius = "5px"; /* Optional - Round the corners */
+  button.style.fontSize = "12px";
+  button.style.fontWeight = "normal";
+  button.style.cursor = "pointer";
+  button.style.zIndex = "999999999999";
+  button.classList.add("testIdExtensionButton");
 
   button.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -157,7 +209,11 @@ const removeBorderFromElementsWithTestId = () => {
     element.removeEventListener("mouseleave", removeCopyButton);
   });
 
-  document.querySelector(".copyButton")?.remove();
+  document.querySelector(".testIdExtensionButton")?.remove();
 
   observer.disconnect();
+};
+
+const isCtrlShiftPressed = (event: KeyboardEvent) => {
+  return (event.metaKey || event.ctrlKey) && event.shiftKey;
 };

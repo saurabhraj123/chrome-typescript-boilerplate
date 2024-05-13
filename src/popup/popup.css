@@ -24,3 +24,10 @@ label {
   gap: 4px;
   margin-top: 8px;
 }
+
+.keyboardShortcut {
+  background-color: gray;
+  color: white;
+  padding: 0.4em 0.8em;
+  border-radius: 3px;
+}
