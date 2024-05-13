@@ -38,6 +38,7 @@ export const sendShowCopyIconToContentScript = (showCopyIcon: boolean) => {
 export const getShowCopyIconFromChromeStorage = () => {
   return new Promise((resolve, reject) => {
     chrome.storage.sync.get("showCopyIcon", (result) => {
+      console.log({ result });
       if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
       else resolve(result.showCopyIcon);
     });

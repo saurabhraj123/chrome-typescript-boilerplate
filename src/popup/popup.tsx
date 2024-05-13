@@ -33,7 +33,10 @@ const App: React.FC<{}> = () => {
     });
 
     getShowCopyIconFromChromeStorage().then((showCopyIcon: boolean) => {
-      setShowCopyIcon(showCopyIcon || true);
+      const shouldShowIcon =
+        typeof showCopyIcon === "undefined" ? true : showCopyIcon;
+      console.log(typeof showCopyIcon === "undefined" ? true : showCopyIcon);
+      setShowCopyIcon(shouldShowIcon);
     });
   }, []);
 

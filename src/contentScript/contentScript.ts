@@ -26,7 +26,7 @@ getBorderColorFromChromeStorage()
 
 getShowCopyIconFromChromeStorage()
   .then((showIcon: boolean) => {
-    showCopyIcon = showIcon || true;
+    showCopyIcon = typeof showIcon === "undefined" || true;
   })
   .catch(() => (showCopyIcon = true));
 

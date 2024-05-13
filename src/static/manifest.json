@@ -1,13 +1,9 @@
 {
   "name": "Data Test Id - Inspector",
-  "description": "Chrome Extension in React!",
+  "author": "Saurabh Raj",
+  "description": "This extension helps you to inspect the data-test-id attribute of the elements on the page.",
   "version": "1.0.0",
   "manifest_version": 3,
-  "icons": {
-    "16": "icon.png",
-    "48": "icon.png",
-    "128": "icon.png"
-  },
   "action": {
     "default_popup": "popup.html",
     "default_title": "Data Test Id - Inspector",
